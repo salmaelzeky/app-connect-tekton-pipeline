@@ -26,7 +26,7 @@ spec:
 
   steps:
     - name: make-output-writable
-      image: image-registry.openshift-image-registry.svc:5000/openshift/tools
+      image: image-registry.openshift-image-registry.svc:5000/cp4i/pipeline-is
       script: |
         #!/bin/bash
 
