@@ -3,8 +3,6 @@
 	<name>TawakkalnaAuthAppPrj</name>
 	<comment></comment>
 	<projects>
-		<project>LoginResponseProcessAppPrjJava</project>
-		<project>LoginResponseProcessV2AppPrjJava</project>
 		<project>esb.framework.lib</project>
 		<project>TawakkalnaAuthAppPrjJava</project>
 	</projects>

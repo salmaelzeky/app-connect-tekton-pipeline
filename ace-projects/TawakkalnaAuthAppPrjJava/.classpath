@@ -7,7 +7,6 @@
 	<classpathentry kind="var" path="COMMON_CLASSES_HOME/IntegrationAPI.jar"/>
 	<classpathentry kind="con" path="com.ibm.etools.mft.uri.classpath.MBProjectReference"/>
 	<classpathentry kind="lib" path="Lib/commons-codec-1.14.jar"/>
-	<classpathentry kind="lib" path="Lib/CreateSessionJWT.jar"/>
 	<classpathentry kind="lib" path="Lib/jackson-annotations-2.12.3.jar"/>
 	<classpathentry kind="lib" path="Lib/jackson-core-2.12.3.jar"/>
 	<classpathentry kind="lib" path="Lib/jackson-databind-2.12.3.jar"/>
