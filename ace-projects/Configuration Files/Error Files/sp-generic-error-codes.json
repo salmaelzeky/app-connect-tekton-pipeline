@@ -1,0 +1,55 @@
+{
+  "CacheMaxAge":4,
+  "TechnicalErrors": [
+    {
+      "bipCodes": [
+        "3701",
+        "3150",
+        "3691",
+        "3152",
+        "3165",
+        "3586",
+        "404"
+      ],
+      "ErrorCode": "F-9000",
+      "ErrorDescription": "Provider Connectivity Error"
+    },
+    {
+      "bipCodes": [
+        "3151",
+        "3161",
+        "3552"
+      ],
+      "ErrorCode": "F-9001",
+      "ErrorDescription": "Timeout Error"
+    },
+    {
+      "bipCodes": [
+        "3113",
+        "5026",
+        "5025"
+      ],
+      "ErrorCode": "F-9002",
+      "ErrorDescription": "Schema Validation Error"
+    },
+    {
+      "bipCodes": [
+        "2321",
+        "2322"
+      ],
+      "ErrorCode": "F-9003",
+      "ErrorDescription": "Database Connection Error"
+    },
+    {
+      "ErrorCode": "F-9004",
+      "ErrorDescription": "Unexpected System Error"
+    },
+    {
+      "bipCodes": [
+        "2725"
+      ],
+      "ErrorCode": "F-9005",
+      "ErrorDescription": "Authorization Error"
+    }
+  ]
+}

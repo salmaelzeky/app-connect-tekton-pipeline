@@ -1,0 +1,10 @@
+{
+  "CacheMaxAge": 0,
+  "BusinessErrors": [
+    {
+      "ThrownCode": "2",
+      "ErrorCode": "E223004",
+      "ErrorDescription": "Invalid national ID."
+    }
+  ]
+}

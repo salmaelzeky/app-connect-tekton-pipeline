@@ -1,0 +1,14 @@
+{
+	"Config": {
+	  "ServiceConfig": {
+		"CacheMaxAge": 24
+	  },
+	  "ServiceProperties": {
+		"CustomErrorsFile" : "day-care-acceptance-errors.json",
+		"EnableSchemaValidation": "False",
+		"Database": {
+		  "SchemaName": "SA"
+		}
+	  }
+	}
+  }

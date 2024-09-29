@@ -1,0 +1,14 @@
+{
+    "Config": {
+        "ServiceConfig": {
+            "CacheMaxAge": 4
+        },
+      "ServiceProperties": {
+        "CustomErrorsFile": "sheltering-services-errors.json",
+        "EnableSchemaValidation": "False",
+        "Database": {
+          "SchemaName": "SA"
+        }
+      }
+    }
+}

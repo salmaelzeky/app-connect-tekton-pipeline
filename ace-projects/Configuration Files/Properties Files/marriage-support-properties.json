@@ -1,0 +1,14 @@
+{
+  "Config": {
+    "ServiceConfig": {
+      "CacheMaxAge": null
+    },
+    "ServiceProperties": {
+      "CustomErrorsFile": "marriage-support-errors.json",
+      "EnableSchemaValidation": "False",
+      "Database": {
+        "SchemaName": "SA"
+      }
+    }
+  }
+}
