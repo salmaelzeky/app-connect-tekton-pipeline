@@ -1,0 +1,30 @@
+{
+  "Config": {
+    "ServiceConfig": {
+      "CacheMaxAge": 24
+    },
+    "ServiceProperties": {
+      "CustomErrorsFile": "tawkkalna-errors.json",
+      "EnableSchemaValidation": "False",
+      "SCId": "ESBTEST",
+      "MobileAppSchemaName": "HRSD_MOBILEAPP",
+      "DeviceSerialId": "123",
+      "TimeToLife": "28800",
+      "SvcId": "PersonDtlsInq",
+      "FuncId": "13600000",
+      "GetPersonDetails": {
+        "Endpoint": "http://is03-http-cp4i-prod.apps.ocp-prod.hrsd.gov.sa/v4/persons/details/",
+        "OperatorPOINum": "1028308656",
+        "LangCode": "EN",
+        "SponsorFlg": "N",
+        "DependentFlg": "N",
+        "PassportFlg": "N",
+        "TitleFlg": "Y"
+      },
+      "TawklanaPublicKeys": {
+        "appIdsalaryCalculatorKey": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAn8Wt7cuMx1yVKq1zbrxP5Gw0ZicpJm8AnAWc0zQShMy0nqfI1pesxWS4ml04Xblo6JXpWoO12rIA0FWT9EfVbBnttktV+xHRlngQduyYCR1plolF8ytO83XobeoA7/1EygF6NA0cBFqN/iM0vW7GujAQ0lqX7ue7gF3EwG401jvE1F7WD4f/oDTIGfO0GPfTh0cRiTxCG0zj4Smn+v15bkLrzRuFH1tBLNySqmm/GhAjs+PuQh9W/buz1OhDDTlboV5lF30sD1aw6KIOBwXDWTjkh5tiAR5/B0swhP+BdPhgGq5aH1mmWwjUF1DQI1N3LdeMVXWYyk9Jq8TNm5WoWwIDAQAB",
+        "appId41": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAn8Wt7cuMx1yVKq1zbrxP5Gw0ZicpJm8AnAWc0zQShMy0nqfI1pesxWS4ml04Xblo6JXpWoO12rIA0FWT9EfVbBnttktV+xHRlngQduyYCR1plolF8ytO83XobeoA7/1EygF6NA0cBFqN/iM0vW7GujAQ0lqX7ue7gF3EwG401jvE1F7WD4f/oDTIGfO0GPfTh0cRiTxCG0zj4Smn+v15bkLrzRuFH1tBLNySqmm/GhAjs+PuQh9W/buz1OhDDTlboV5lF30sD1aw6KIOBwXDWTjkh5tiAR5/B0swhP+BdPhgGq5aH1mmWwjUF1DQI1N3LdeMVXWYyk9Jq8TNm5WoWwIDAQAB"
+      }
+    }
+  }
+}

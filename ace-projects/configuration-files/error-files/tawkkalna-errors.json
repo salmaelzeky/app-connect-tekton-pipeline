@@ -1,0 +1,20 @@
+{
+    "CacheMaxAge":4,
+    "BusinessErrors": [
+      {
+        "ThrownCode": "E000232",
+        "ErrorCode": "E000232",
+        "ErrorDescription": "Social ID is required."
+      },
+      {
+        "ThrownCode": "E000203",
+        "ErrorCode": "E000203",
+        "ErrorDescription": "This user is not registered."
+      },
+      {
+        "ThrownCode": "E213002",
+        "ErrorCode": "E213002",
+        "ErrorDescription": "Invalid Social ID."
+      }
+    ]
+  }
