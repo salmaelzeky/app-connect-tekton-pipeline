@@ -1,0 +1,65 @@
+BROKER SCHEMA esb.framework.esql
+
+DECLARE ErrorCodes SHARED ROW;
+
+CREATE COMPUTE MODULE ExceptionHandler_SaveCodes
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		DECLARE ErrorCodesPath, cacheAge CHARACTER;
+		IF EXISTS(InputRoot.XMLNSC[]) THEN
+			DECLARE OuterCursor REFERENCE TO InputRoot.XMLNSC.ErrorMapping;
+			MOVE OuterCursor LASTCHILD;
+			SET cacheAge = InputRoot.XMLNSC.ErrorMapping.CacheMaxAge;
+			CALL SaveErrorCodes(OuterCursor, ErrorCodesPath, cacheAge);
+		ELSE
+			DECLARE OuterCursor REFERENCE TO InputRoot.JSON.Data.*[>];
+			MOVE OuterCursor NEXTSIBLING;
+			SET cacheAge = InputRoot.JSON.Data.CacheMaxAge;
+			CALL SaveErrorCodes(OuterCursor, ErrorCodesPath, cacheAge);
+		END IF;
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE SaveErrorCodes (IN OuterCursor REFERENCE, IN ErrorCodesPath CHARACTER, IN cacheAge CHARACTER) BEGIN
+		IF FIELDNAME(OuterCursor) = 'TechnicalErrors' THEN
+			SET ErrorCodesPath = NULL;
+			IF (cacheAge IS NOT NULL AND cacheAge <> '') THEN
+				DECLARE EndDate TIMESTAMP CURRENT_TIMESTAMP + CAST(cacheAge AS INTERVAL HOUR);
+				SET ErrorCodes.config.cacheEndDate.TechnicalErrors = EndDate;
+			ELSE
+				SET ErrorCodes.config.cacheEndDate.TechnicalErrors = CURRENT_TIMESTAMP + INTERVAL '1' YEAR;
+			END IF;
+		ELSE
+			SET ErrorCodesPath = FIELDVALUE(Environment.ServiceName);
+			IF (cacheAge IS NOT NULL AND cacheAge <> '') THEN
+				DECLARE EndDate TIMESTAMP CURRENT_TIMESTAMP + CAST(cacheAge AS INTERVAL HOUR);
+				SET ErrorCodes.config.cacheEndDate.{Environment.ServiceName} = EndDate;
+			ELSE
+				SET ErrorCodes.config.cacheEndDate.{Environment.ServiceName} = CURRENT_TIMESTAMP + INTERVAL '1' YEAR;
+			END IF;
+		END IF;
+
+		WHILE LASTMOVE(OuterCursor) DO
+			DECLARE InnerCursor REFERENCE TO OuterCursor.*[>];
+			WHILE LASTMOVE(InnerCursor) DO
+				IF ErrorCodesPath IS NOT NULL AND ErrorCodesPath <> '' THEN
+					CREATE LASTCHILD OF ErrorCodes.{FIELDNAME(OuterCursor)}.{ErrorCodesPath} NAME 'Item';
+					SET ErrorCodes.{FIELDNAME(OuterCursor)}.{ErrorCodesPath}.Item[<] = InnerCursor;
+				ELSE
+					CREATE LASTCHILD OF ErrorCodes.{FIELDNAME(OuterCursor)} NAME 'Item';
+					SET ErrorCodes.{FIELDNAME(OuterCursor)}.Item[<] = InnerCursor;
+				END IF;
+				MOVE InnerCursor NEXTSIBLING;
+			END WHILE;
+			MOVE OuterCursor NEXTSIBLING;
+		END WHILE;
+
+		IF ErrorCodesPath IS NOT NULL AND ErrorCodesPath <> '' THEN
+			SET Environment.ErrorCodes.BusinessErrors = ErrorCodes.BusinessErrors.{Environment.ServiceName};
+		ELSE
+			SET Environment.ErrorCodes.TechnicalErrors = ErrorCodes.TechnicalErrors;
+		END IF;
+		
+	END;
+	
+END MODULE;

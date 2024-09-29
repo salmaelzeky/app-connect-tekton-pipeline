@@ -1,0 +1,50 @@
+BROKER SCHEMA esb.framework.esql
+
+CREATE PROCEDURE paddWithSpaces(IN valueToBePadded CHARACTER, IN desLength INTEGER)
+RETURNS CHARACTER
+BEGIN
+	WHILE LENGTH(valueToBePadded) < desLength
+		DO
+		SET valueToBePadded = valueToBePadded || ' ';
+	END WHILE;
+	RETURN valueToBePadded;
+END;
+
+CREATE PROCEDURE paddWithLeftSpaces(IN valueToBePadded CHARACTER, IN desLength INTEGER)
+RETURNS CHARACTER
+BEGIN
+	WHILE LENGTH(valueToBePadded) < desLength
+		DO
+		SET valueToBePadded = ' ' || valueToBePadded ;
+	END WHILE;
+	RETURN valueToBePadded;
+END;
+
+CREATE PROCEDURE paddWithZeros(IN valueToBePadded CHARACTER, IN desLength INTEGER)
+RETURNS CHARACTER
+BEGIN
+	WHILE LENGTH(valueToBePadded) < desLength
+		DO
+		SET valueToBePadded = '0' || valueToBePadded ;
+	END WHILE;
+	RETURN valueToBePadded;
+END;
+
+CREATE PROCEDURE getHijriDate(IN inputDate CHARACTER)
+RETURNS CHARACTER
+BEGIN
+	DECLARE hijriDate, inputDateYear CHARACTER;
+	DECLARE dateChar CHARACTER inputDate;
+	DECLARE inputDateMonth CHARACTER SUBSTRING(dateChar FROM 5 FOR 2);
+	DECLARE inputDateDay CHARACTER SUBSTRING(dateChar FROM 7 FOR 2);
+	DECLARE intDateDay INTEGER SUBSTRING(dateChar FROM 7 FOR 2);
+	--DECLARE dateDate Date CAST(dateChar AS DATE FORMAT 'yyyyMMdd');
+	IF inputDateMonth = '02' AND intDateDay > 28 THEN
+		SET inputDateYear = SUBSTRING(dateChar FROM 1 FOR 4);
+		SET hijriDate = inputDateYear || '-' || inputDateMonth || '-' || inputDateDay;
+	ELSE
+		SET hijriDate = CAST(CAST(dateChar AS DATE FORMAT 'yyyyMMdd') AS CHARACTER FORMAT 'yyyy-MM-dd');
+		--SET hijriDate = CAST(dateDate AS CHARACTER FORMAT 'yyyy-MM-dd');
+	END IF;
+	RETURN hijriDate;
+END;

@@ -1,0 +1,47 @@
+BROKER SCHEMA esb.tawakkalna.auth.esqls
+
+CREATE COMPUTE MODULE InsertTawakkalnaJWT
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		-- Copy Entire Message
+		CALL CopyEntireMessage();
+		-- Declare request reference
+		CREATE FIELD Environment.Variables.StoredProcedureRq.Insert_Session_JWTRq;
+		DECLARE Request REFERENCE TO Environment.Variables.StoredProcedureRq.Insert_Session_JWTRq;
+		-- Declare response reference
+		CREATE FIELD Environment.Variables.StoredProcedureRs.Insert_Session_JWTRs;
+		DECLARE Response REFERENCE TO Environment.Variables.StoredProcedureRs.Insert_Session_JWTRs;
+		-- Input parameters preparation
+		SET Request.P_JWT = Environment.SessionJWT;
+		SET Request.P_SESSION_ID = Environment.Variables.StoredProcedureRs.SessionManageRs.SessionId;
+		-- Stored Procedure parameters preparation
+		CALL INSERT_SESSION_JWT(
+		Request.P_JWT,
+		Request.P_SESSION_ID,
+		Response.StatusCode,
+		Response.StatusDesc
+		);
+
+		IF Response.StatusCode = 0 THEN
+			SET OutputRoot.JSON.MsgRsHdr.ResponseStatus.StatusCode = Response.StatusCode;
+			SET OutputRoot.JSON.MsgRsHdr.ResponseStatus.StatusDesc = Response.StatusDesc;
+		ELSE
+			THROW USER EXCEPTION VALUES(Response.StatusCode,Response.StatusDesc);
+		END IF;
+
+		RETURN TRUE;
+	END;
+	
+	-- Stored Procedure Signature
+	Create Procedure INSERT_SESSION_JWT(
+	IN P_JWT CHARACTER,
+	IN P_SESSION_ID CHARACTER,
+	OUT P_STATUS_CODE CHARACTER,
+	OUT P_STATUS_DESC CHARACTER
+	) LANGUAGE DATABASE
+	EXTERNAL NAME "HRSD_MOBILEAPP.MOBILE_SERVICES.INSERT_SESSION_JWT";
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		SET OutputRoot = InputRoot;
+	END;
+END MODULE;

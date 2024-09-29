@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" targetNamespace="http://esb.hrsd.eg/framework.message.header.v0.1" xmlns:ibmSchExtn="http://www.ibm.com/schema/extensions" xmlns:tns="http://esb.hrsd.eg/framework.message.header.v0.1">
+	<xsd:element ibmSchExtn:docRoot="true" name="MessageHeader" type="tns:MessageHeader_Type"/>
+	<xsd:element name="ServiceResponse" type="tns:ServiceResponse_Type"/>
+	<xsd:complexType name="MessageHeader_Type">
+		<xsd:sequence>
+			<xsd:element minOccurs="0" name="GUID">
+				<xsd:simpleType>
+					<xsd:restriction base="xsd:string">
+						<xsd:pattern value="[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="RequestId" type="xsd:string" />
+			<xsd:element name="SourceId" type="xsd:string"/>
+			<xsd:element name="ChannelId" type="xsd:string" minOccurs="0" />
+			<xsd:element minOccurs="0" name="LanguageCode" type="xsd:string" />
+			<xsd:element minOccurs="0" name="UserId" type="xsd:string"/>
+			<xsd:element minOccurs="0" name="SourceEnvironment" type="xsd:string" />
+			<xsd:element minOccurs="0" name="ClientDateTime" type="xsd:dateTime"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="ServiceResponse_Type">
+		<xsd:sequence>
+			<xsd:element name="Status" type="xsd:string"/>
+			<xsd:element minOccurs="0" name="StatusDescription" type="xsd:string"/>
+			<xsd:element name="ServerDateTime" type="xsd:dateTime"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:schema>

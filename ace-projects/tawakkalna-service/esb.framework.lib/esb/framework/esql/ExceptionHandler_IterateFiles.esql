@@ -1,0 +1,14 @@
+BROKER SCHEMA esb.framework.esql
+
+CREATE COMPUTE MODULE ExceptionHandler_IterateFiles
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		IF Environment.ErrorFiles.ToBeCached.TechnicalErrors = TRUE THEN
+			PROPAGATE TO TERMINAL 'out';
+		END IF;
+		IF Environment.ErrorFiles.ToBeCached.BusinessErrors = TRUE THEN
+			SET OutputLocalEnvironment.Destination.File.Name = Environment.Properties.CustomErrorsFile;
+		END IF;
+		RETURN TRUE;
+	END;
+END MODULE;

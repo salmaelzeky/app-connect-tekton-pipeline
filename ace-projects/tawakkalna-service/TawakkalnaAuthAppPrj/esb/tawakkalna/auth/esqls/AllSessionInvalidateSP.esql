@@ -1,0 +1,80 @@
+BROKER SCHEMA esb.tawakkalna.auth.esqls
+
+CREATE COMPUTE MODULE AllSessionInvalidateSP
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		-- PRECALL
+		-- Copy Entire Message
+		CALL CopyEntireMessage();
+		
+		-- Declare request reference
+		CREATE FIELD Environment.Variables.StoredProcedureRq.InvalidateAllSessionsRq;
+		DECLARE Request REFERENCE TO Environment.Variables.StoredProcedureRq.InvalidateAllSessionsRq;
+		
+		-- Declare response reference
+		CREATE FIELD Environment.Variables.StoredProcedureRs.InvalidateAllSessionsRs;
+		DECLARE Response REFERENCE TO Environment.Variables.StoredProcedureRq.InvalidateAllSessionsRs;
+
+		-- Input parameters preparation
+		SET Request.MsgId = Environment.Variables.Header.MsgId;
+		SET Request.RqUID = Environment.Variables.Header.RqUID;
+		SET Request.SCId = Environment.Variables.Header.SCId;
+		SET Request.UserId = Environment.Variables.Header.UserId;
+		SET Request.SocialId = Environment.Variables.StoredProcedureRq.SessionManageRq.SocialId;
+		SET Request.SessionId = Environment.Variables.StoredProcedureRs.SessionManageRs.SessionId;
+		SET Request.ClientDate = Environment.Variables.Header.ClientDt;
+		-- Declare response reference
+		DECLARE MobileAppSchemaName CHARACTER Environment.Properties.MobileAppSchemaName;
+		-- Stored Procedure parameters preparation
+		CALL INVALIDATE_ALL_SESSIONS(
+		COALESCE(Request.MsgId, ''),
+		COALESCE(Request.RqUID, ''),
+		COALESCE(Environment.Variables.FlowProperties.DebugMode, ''),
+		COALESCE(Request.SCId, ''),
+		COALESCE(Request.FuncId, ''),
+		COALESCE(Request.RqMode, ''),
+		COALESCE(Request.CustLangPref, ''),
+		Request.UserId,
+		COALESCE(Request.ClientDate, ''),
+		COALESCE(Request.SocialId, ''),
+		COALESCE(Request.SecInfo, ''),
+		COALESCE(Request.SecInfoType, ''),
+		Response.StatusCode,
+		Response.StatusDesc,
+		Request.SessionId
+		)IN Database.{MobileAppSchemaName};
+		
+		IF Response.StatusCode = 'I000000' THEN
+		SET OutputRoot.JSON.MsgRsHdr.ResponseStatus.StatusCode = Response.StatusCode;
+		SET OutputRoot.JSON.MsgRsHdr.ResponseStatus.StatusDesc = Response.StatusDesc;
+		ELSE
+			THROW USER EXCEPTION VALUES(Response.StatusCode,Response.StatusDesc);
+		END IF;
+		
+		RETURN TRUE;
+	END;
+
+	-- Stored Procedure Signature
+	Create Procedure INVALIDATE_ALL_SESSIONS(
+		IN P_MSG_ID CHARACTER,
+		IN P_RQ_UID CHARACTER,
+		IN P_DEBUG_MODE CHARACTER,
+		IN P_SC_ID CHARACTER,
+		IN P_FUN_ID CHARACTER,
+		IN P_RQ_MODE CHARACTER,
+		IN P_PREF_LANG CHARACTER,
+		INOUT P_USER_ID CHARACTER,
+		IN P_CLIENT_DATE CHARACTER,
+		IN P_SOCIAL_ID CHARACTER,
+		IN P_SEC_INFO CHARACTER,
+		IN P_SEC_INFO_TYPE CHARACTER,
+		OUT P_STATUS_CODE CHARACTER,
+		OUT P_STATUS_DESC CHARACTER,
+		IN P_SESSION_ID CHARACTER
+	) LANGUAGE DATABASE
+	EXTERNAL NAME "INVALIDATE_ALL_SESSIONS";
+	
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		SET OutputRoot = InputRoot;
+	END;
+END MODULE;

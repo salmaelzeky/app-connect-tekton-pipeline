@@ -1,0 +1,38 @@
+BROKER SCHEMA esb.framework.esql
+
+CREATE FILTER MODULE ExceptionHandler_IsCached
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		IF (EXISTS (ErrorCodes.TechnicalErrors[]) AND ErrorCodes.config.cacheEndDate.TechnicalErrors > CURRENT_TIMESTAMP ) THEN
+			SET Environment.ErrorCodes.TechnicalErrors = ErrorCodes.TechnicalErrors;
+			SET Environment.ErrorFiles.ToBeCached.TechnicalErrors = FALSE;
+		ELSE
+			SET Environment.ErrorFiles.ToBeCached.TechnicalErrors = TRUE;
+		END IF;
+		
+		IF NOT EXISTS(Environment.ServiceName[]) THEN 
+			DECLARE soapServiceName CHARACTER LocalEnvironment.Destination.RouterList.DestinationData.labelName;
+			DECLARE restServiceName CHARACTER;
+			DECLARE restRef REFERENCE TO  LocalEnvironment.HTTP.Input.Path.Segment[1];
+			restNameLoop:WHILE LASTMOVE(restRef) DO
+				SET restServiceName = COALESCE(restServiceName || restRef, restRef);
+				IF restRef <> LocalEnvironment.REST.Input.Operation THEN
+					MOVE restRef NEXTSIBLING;
+				ELSE
+					LEAVE restNameLoop;
+				END IF;
+			END WHILE;
+			SET Environment.ServiceName = COALESCE(soapServiceName, restServiceName);
+		END IF;
+		
+		IF (EXISTS (ErrorCodes.BusinessErrors.{Environment.ServiceName}[]) AND ErrorCodes.config.cacheEndDate.{Environment.ServiceName} > CURRENT_TIMESTAMP ) THEN
+			SET Environment.ErrorCodes.BusinessErrors = ErrorCodes.BusinessErrors.{Environment.ServiceName};
+			SET Environment.ErrorFiles.ToBeCached.BusinessErrors = FALSE;
+			RETURN TRUE;
+		END IF;
+		
+		SET Environment.ErrorFiles.ToBeCached.BusinessErrors = TRUE;
+		
+		RETURN FALSE;
+	END;
+END MODULE;

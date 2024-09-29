@@ -1,0 +1,96 @@
+
+
+BROKER SCHEMA esb.framework.esql
+
+CREATE COMPUTE MODULE ExceptionHandler_GenerateResponse
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		DECLARE tmp ROW;
+		CREATE LASTCHILD OF tmp DOMAIN('XMLNSC') NAME 'ExceptionList';
+		SET tmp.ExceptionList = InputExceptionList;
+		CALL LogMsg('Exception List', Environment.Variables.GUID, tmp.ExceptionList);
+		CALL CopyMessageHeaders();
+		DECLARE GENERAL_ERROR_CODE CHARACTER 'F-9004';
+		DECLARE ExceptionRef REFERENCE TO InputExceptionList.*[1];
+		WHILE (FIELDNAME(ExceptionRef) <> 'Insert' AND LASTMOVE(ExceptionRef)) DO
+			MOVE ExceptionRef LASTCHILD;
+		END WHILE;
+		MOVE ExceptionRef PARENT;
+		SET Environment.Variables.ExceptionRefNumber = ExceptionRef.Number;
+		DECLARE ErrorDetails ROW;
+		IF FIELDNAME(ExceptionRef) = 'UserException' AND (Environment.Variables.OrgHTTPCode <> 404 OR Environment.Variables.OrgHTTPCode IS NULL) THEN
+			IF ExceptionRef.Insert[1].Text <> '' THEN
+				-- Getting business error details from error-codes file
+				SET ErrorDetails.Item = THE(SELECT E FROM Environment.ErrorCodes.BusinessErrors.Item[] AS E WHERE E.ThrownCode = ExceptionRef.Insert[1].Text);
+			END IF;
+		ELSE
+			-- Getting technical error details from error-codes file
+			IF Environment.Variables.OrgHTTPCode = 404 THEN
+				SET Environment.Variables.ExceptionRefNumber = Environment.Variables.OrgHTTPCode;
+			END IF;
+			SET ErrorDetails.Item =
+			THE(
+			SELECT E.ErrorCode AS ErrorCode,
+			E.ErrorDescription || ' | BIP' || CAST(Environment.Variables.ExceptionRefNumber AS CHARACTER) AS ErrorDescription
+			FROM Environment.ErrorCodes.TechnicalErrors.Item[] AS E
+			WHERE Environment.Variables.ExceptionRefNumber IN (E.BipCodes.Item[])
+			);
+		END IF;
+
+		IF NOT EXISTS(ErrorDetails.Item[]) THEN
+			SET ErrorDetails.Item.ErrorCode = GENERAL_ERROR_CODE;
+			SET ErrorDetails.Item.ErrorDescription =
+			THE(SELECT ITEM E.ErrorDescription FROM Environment.ErrorCodes.TechnicalErrors.Item[] AS E WHERE E.ErrorCode = GENERAL_ERROR_CODE);
+		END IF;
+		IF Environment.Variables.ExceptionRefNumber = '4395' THEN
+			IF FIELDNAME(Environment.InvalidID) <> '' THEN
+				SET ErrorDetails.Item.ErrorCode = 'F-9006';
+				SET ErrorDetails.Item.ErrorDescription = 'Application ID is incorrect.';
+			ELSE
+				SET ErrorDetails.Item.ErrorCode = 'F-9007';
+				SET ErrorDetails.Item.ErrorDescription = 'Invalid Token';
+			END IF;
+		END IF;
+		IF EXISTS(InputRoot.SOAP[]) THEN
+			IF FIELDNAME(ExceptionRef) = 'UserException' THEN
+				DECLARE fram NAMESPACE 'http://esb.sumerge.eg/framework.message.header.v0.1';
+				SET OutputRoot.SOAP.Header.fram:MessageHeader = Environment.Variables.MessageHeader;
+				DECLARE RootElementName CHARACTER COALESCE (Environment.Variables.MessageDetails.RootElementName , SUBSTRING(FIELDNAME(InputRoot.SOAP.Body.*:*[>]) BEFORE 'Request')) ;
+				DECLARE TargetNamespace CHARACTER COALESCE (Environment.Variables.MessageDetails.TargetNamespace , FIELDNAMESPACE(InputRoot.SOAP.Body.*:*[>]));
+				DECLARE Tns NAMESPACE TargetNamespace;
+				CREATE LASTCHILD OF OutputRoot.SOAP.Body.Tns:{RootElementName||'Response'}.fram:ServiceResponse;
+				DECLARE refServiceResponse REFERENCE TO OutputRoot.SOAP.Body.Tns:{RootElementName||'Response'}.fram:ServiceResponse;
+				SET refServiceResponse.Status = ErrorDetails.Item.ErrorCode;
+				SET refServiceResponse.StatusDescription = REPLACE(ErrorDetails.Item.ErrorDescription, '{}', '[' || COALESCE(ExceptionRef.Insert[2].Text, '') || ']');
+				SET refServiceResponse.ServerDateTime = CURRENT_TIMESTAMP;
+			ELSE
+				DECLARE soapns NAMESPACE 'http://schemas.xmlsoap.org/soap/envelope/';
+				SET OutputRoot.SOAP.Body.soapns:Fault.faultcode = 'Client';
+				SET OutputRoot.SOAP.Body.soapns:Fault.faultstring = REPLACE(ErrorDetails.Item.ErrorDescription, '{}', '[' || COALESCE(ExceptionRef.Insert[2].Text, '') || ']');
+				CREATE FIELD OutputRoot.SOAP.Body.soapns:Fault.detail;
+				DECLARE refErrorElement REFERENCE TO OutputRoot.SOAP.Body.soapns:Fault.detail;
+				SET refErrorElement.ErrorCode = ErrorDetails.Item.ErrorCode;
+				SET refErrorElement.NativeErrorCode = ExceptionRef.Number;
+				SET refErrorElement.ErrorText = ExceptionRef.Text||' '||ExceptionRef.Insert[<3].Text||' '||ExceptionRef.Insert[<2].Text||' '||ExceptionRef.Insert[<1].Text;
+			END IF;
+			--CALL LogMsg('Error Response', Environment.Variables.GUID, OutputRoot.SOAP);
+		ELSE
+			SET OutputRoot.JSON.Data.status.code = ErrorDetails.Item.ErrorCode;
+			SET OutputRoot.JSON.Data.status.description =
+			REPLACE(ErrorDetails.Item.ErrorDescription, '{}', '[' || COALESCE(ExceptionRef.Insert[2].Text, '') || ']');
+			CALL LogMsg('Error Response', Environment.Variables.GUID, OutputRoot.JSON.Data);
+		END IF;
+		SET OutputLocalEnvironment.Destination.HTTP.ReplyStatusCode = '400';
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+END MODULE;

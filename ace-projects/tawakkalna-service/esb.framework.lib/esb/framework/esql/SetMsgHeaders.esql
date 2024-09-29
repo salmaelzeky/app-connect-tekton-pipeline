@@ -1,0 +1,38 @@
+BROKER SCHEMA esb.framework.esql
+
+
+CREATE COMPUTE MODULE SetMsgHeaders
+		CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		-- CALL CopyMessageHeaders();
+		CALL CopyEntireMessage();
+		SET Environment.Variables.Header.MsgId = UUIDASCHAR;
+		-- Storing QueryString value
+		SET Environment.Variables.Header.HTTP.QueryString = InputLocalEnvironment.HTTP.Input.QueryString;
+		SET Environment.Variables.MsgRqHdr = InputRoot.HTTPInputHeader."User-Agent";
+		-- Parsing MsgRqHdr
+		IF EXISTS(Environment.Variables.MsgRqHdr[]) THEN
+			DECLARE Msg ROW;
+			DECLARE MsgRqHdr REFERENCE TO Environment.Variables.MsgRqHdr;			
+			SET MsgRqHdr = CAST(MsgRqHdr AS BLOB CCSID InputRoot.Properties.CodedCharSetId);
+			
+			CREATE LASTCHILD OF Msg DOMAIN('JSON') PARSE(MsgRqHdr);
+			
+			SET Environment.Variables.Header.RqUID = COALESCE(Msg.JSON.Data.MsgRqHdr.RqUID, UUIDASCHAR);
+			SET Environment.Variables.Header.SCId = Msg.JSON.Data.MsgRqHdr.SCId;
+			SET Environment.Variables.Header.SvcId = Msg.JSON.Data.MsgRqHdr.SvcId;
+			SET Environment.Variables.Header.FuncId = Msg.JSON.Data.MsgRqHdr.FuncId;
+			SET Environment.Variables.Header.UserId = Msg.JSON.Data.MsgRqHdr.UserId;
+			SET Environment.Variables.Header.ClientDt = CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'yyyy-MM-dd''T''HH:mm:ss');
+			SET Environment.Variables.Header.EchoData = Msg.JSON.Data.MsgRqHdr.EchoData;
+			SET Environment.Variables.Header.Version = Msg.JSON.Data.MsgRqHdr.Version;
+ 
+		END IF;
+
+	RETURN TRUE;
+END;
+
+CREATE PROCEDURE CopyEntireMessage() BEGIN
+	SET OutputRoot = InputRoot;
+END;
+END MODULE;

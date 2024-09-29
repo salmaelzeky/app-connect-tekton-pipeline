@@ -1,0 +1,38 @@
+BROKER SCHEMA esb.framework.esql
+
+DECLARE PropertiesCache SHARED ROW;
+CREATE COMPUTE MODULE PropertyReader_LoadCache_Compute
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL LoadCacheToEnvironment();
+	END;
+
+	CREATE PROCEDURE LoadCacheToEnvironment() BEGIN ATOMIC	
+		DECLARE serviceName CHARACTER Environment.ServiceName;
+		DECLARE genericApp CHARACTER 'generic-app';
+		DECLARE cacheAge CHARACTER;
+		IF EXISTS(InputRoot.XMLNSC[]) THEN
+			SET PropertiesCache.Properties.{serviceName} = InputRoot.XMLNSC.*:*[<].*:ServiceProperties;
+			IF Environment.ServiceName = genericApp THEN 
+				SET cacheAge = 0;
+			ELSE
+				SET cacheAge = InputRoot.XMLNSC.*:*[<].*:ServiceConfig.*:CacheMaxAge;
+			END IF;
+		ELSE
+			SET PropertiesCache.Properties.{serviceName} = InputRoot.JSON.Data.Config.ServiceProperties;
+			IF Environment.ServiceName = genericApp THEN 
+				SET cacheAge = 0;
+			ELSE
+				SET cacheAge = InputRoot.JSON.Data.Config.ServiceConfig.CacheMaxAge;
+			END IF;
+		END IF;
+		
+		IF (cacheAge IS NOT NULL AND cacheAge <> '') THEN
+			DECLARE EndDate TIMESTAMP CURRENT_TIMESTAMP + CAST(cacheAge AS INTERVAL HOUR);
+			SET PropertiesCache.Config.{serviceName}.CacheEndDate = EndDate;
+		ELSE
+			SET PropertiesCache.Config.{serviceName}.CacheEndDate = CURRENT_TIMESTAMP + INTERVAL '1' YEAR;
+		END IF;
+		SET Environment.Properties = PropertiesCache.Properties.{serviceName};
+	END;
+END MODULE;

@@ -1,0 +1,6 @@
+BROKER SCHEMA esb.framework.esql
+
+CREATE PROCEDURE matchRegex(IN text CHARACTER,IN regexPattern CHARACTER)
+RETURNS BOOLEAN
+LANGUAGE JAVA
+EXTERNAL NAME "esb.framework.java.lib.HelperFunctions.matchRegex";
