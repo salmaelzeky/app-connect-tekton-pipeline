@@ -1,0 +1,21 @@
+BROKER SCHEMA esb.tawakkalna.auth.esqls
+
+CREATE COMPUTE MODULE TransformResponse
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN		
+		IF (Environment.StatusCode = 'I000000')THEN
+			CREATE FIELD OutputRoot.JSON.Data;
+			DECLARE outRoot REFERENCE TO OutputRoot.JSON.Data;
+			SET outRoot.header.status.code = Environment.StatusCode;
+			SET outRoot.header.status.description = 'Success';
+			SET outRoot.data.sessionId = NULLIF(Environment.SessionJWT,NULL);
+					SET Environment.Variables.MsgProperties.MsgType = 'RPLY';
+		SET Environment.Variables.StaticMsgProperties.MsgType = 'RPLY';
+		UPDATE Database.CUSTOMER_PROFILE AS A SET C_MOBILE_NO = Environment.mobileNumber, C_CHANNEL_ID = 'TAWAKKALNA' WHERE A.C_SOCIAL_ID = Environment.nationalId;
+		ELSE
+			THROW USER EXCEPTION VALUES (Environment.StatusCode);
+		END IF;
+		RETURN TRUE;
+	END;
+
+END MODULE;
